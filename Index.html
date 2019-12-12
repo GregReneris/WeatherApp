@@ -35,7 +35,7 @@
       <div class="col-9 border currentDay" Current Day>
         <div class="row border"> placeholder to remind me to add better margins and borders.
           <div class="city col-12"> city</div>
-          <div class="icon img col-12"> icon</div>
+          <div><img class="icon col-12 img-fluid" id="setFixed"></img></div>
           <div class="wind col-12"> wind</div>
           <div class="humidity col-12">humidity</div>
           <div class="temp col-12">temp</div>
@@ -43,10 +43,10 @@
         </div>
         <div class="row">
           <div class="col-12">
-            <h5 class ="col-12  bg-light text-dark">Five Day Forecast</h5>
+            <h5 class ="col-12  bg-light text-dark" id="forecastBar">Five Day Forecast</h5>
           <div class="row">
             <div class="col-12"> Five forecast boxes underneath placeholder</div>
-            <div class="col-12 d-flex justify-content-between" id="forecastBox">
+            <div class="col-12 d-flex justify-content-between border-dark bg-primary" id="forecastBox">
             </div>  
           </div>
           </div>
@@ -87,10 +87,6 @@
     //   console.log("*** " +x );
       
     // });
-    
-    var currentURL = "https://api.openweathermap.org/data/2.5/weather?q="+ encodeURIComponent(cities[0]) +",us&APPID="+APIKey;
-    var forecastURL = "https://api.openweathermap.org/data/2.5/forecast?q="+ encodeURIComponent(cities[0]) +",us&cnt=5&APPID="+APIKey;
-
 
     function tempConversion(Kelvin){
       f= (((Kelvin-273.15)*1.8)+32);
@@ -98,89 +94,92 @@
       //℉=((K-273.15)*1.8)+32
     }
 
-    function displayCityInfo(event) {
 
-      event.preventDefault();
+    function iconURL(IconID){
+      return "http://openweathermap.org/img/wn/"+IconID+"@2x.png";
+    };
+    
+    function getTheWeather(city){
+
+      var currentURL = "https://api.openweathermap.org/data/2.5/weather?q="+ encodeURIComponent(city) +",us&APPID="+APIKey;
+      var forecastURL = "https://api.openweathermap.org/data/2.5/forecast?q="+ encodeURIComponent(city) +",us&cnt=5&APPID="+APIKey;
       
-      var city = $(this).attr("data-name");
-      console.log("I am here");
-      console.log(city);
-    // var queryURL = "https://www.omdbapi.com/?t=" + city + "&apikey=APIkey";
 
 
+      // We then created an AJAX call
+      $.ajax({
+        url: currentURL,
+        method: "GET"
+      }).then(function(response) {
+
+        $(".city").text(response.name);
+        $(".icon").attr("src",  iconURL(response.weather[0].icon)  ); // "http://openweathermap.org/img/wn/"+response.weather[0].icon+"@2x.png");
+        $(".wind").text(response.wind.speed+" mph");
+        $(".humidity").text(response.main.humidity +" % humidity");
+        $(".temp").text( tempConversion(response.main.temp));
+
+        // Create CODE HERE to Log the queryURL
+        console.log(response);
+
+      });
+
+      $.ajax({
+        url: forecastURL,
+        method: "GET"
+      }).then(function(response) {
+
+      $("#forecastBox").empty();
+      for (let index = 0; index < 5; index++) {
+        forecast=response.list[index];
+        //this html = var is needed because otherwise jquery would pull in a string, and not actual HTML code.
+
+          html = $( "<div>" );
+          html.append( $('<div class="col-12 border bg-primary">') ).append( $('<img>').attr("src", iconURL(forecast.weather[0].icon))) ;
+          html.append( $('<div class="col-12 border bg-primary">').text(forecast.weather[0].description)  );
+          html.append( $('<div class="col-12 border bg-primary">').text(forecast.wind.speed+" mph")  );
+          html.append( $('<div class="col-12 border bg-primary">').text(forecast.main.humidity +" % humidity"  ));
+          html.append( $('<div class="col-12 border bg-primary">').text( tempConversion( forecast.main.temp ) ) );
+          html.append( $('<div class="col-12 border bg-primary">').text("uv") );
+          $("#forecastBox").append(html);
+          
+
+        console.log("i got here");
+      }
+
+
+      
+
+
+      });
     };
 
-    // We then created an AJAX call
-    $.ajax({
-      url: currentURL,
-      method: "GET"
-    }).then(function(response) {
 
-      $(".city").text(response.name);
-      $(".icon").attr("src", response.weather.icon);
-      $(".wind").text(response.wind.speed+" miles per hour");
-      $(".humidity").text(response.main.humidity)+ " percent humidity";
-      $(".temp").text( tempConversion(response.main.temp)+" degrees fahrenheit");
-
-      // Create CODE HERE to Log the queryURL
-      console.log(response);
-
-    });
-
-    $.ajax({
-      url: forecastURL,
-      method: "GET"
-    }).then(function(response) {
-
-    for (let index = 0; index < 5; index++) {
-       forecast=response.list[index];
-       //this html = var is needed because otherwise jquery would pull in a string, and not actual HTML code.
-      
-      // var humidity= $(".humidty1")+[index];
-
-      // $(".city").text(forecast.name);
-      // $(".icon").text(forecast.weather.icon);
-      // $(".wind").text(forecast.wind.speed);
-      // $(".humidity").text(forecast.main.humidity);
-      // $(".temp").text( tempConversion(forecast.main.temp) );
-
-
-        html = $( "<div>" );
-        html.append( $('<img class="col-12">').text("icon") );
-        html.append( $('<div class="col-12">').text("wind miles per hour")  );
-        html.append( $('<div class="col-12">').text("humidity")  );
-        html.append( $('<div class="col-12">').text( tempConversion( forecast.main.temp ) ) );
-        html.append( $('<div class="col-12">').text("uv") );
-        $("#forecastBox").append(html);
-
-      console.log("i got here");
-    }
-
-
-    
-
-
-    });
 
 function renderButtons() {
 
-// Deletes the cities prior to adding new movies
-// (this is necessary otherwise you will have repeat buttons)
-$("#buttons-view").empty();
+  // Deletes the cities prior to adding new movies
+  // (this is necessary otherwise you will have repeat buttons)
+  $("#buttons-view").empty();
   // Loops through the array of cities
   for (var i = 0; i < cities.length; i++) {
 
     // Then dynamicaly generates buttons for each city in the array
     // This code $("<button>") is all jQuery needs to create the beginning and end tag. (<button></button>)
     var a = $("<button>");
-    a.addClass("city");
+    a.addClass("cityButton");
     a.attr("data-name", cities[i]);
     a.text(cities[i]);
     // Added the button to the buttons-view div
     $("#buttons-view").append(a);
   }
 };
-  
+
+$(document).on("click", ".cityButton", function(event){
+  var city= $(this).attr("data-name");
+  console.log ("who clicked me?"+city);
+  getTheWeather(city);
+
+});
 // $("#add-city").on("click", function(event) {
 //         event.preventDefault();
 //         // This line of code will grab the input from the textbox
@@ -198,7 +197,7 @@ $("#buttons-view").empty();
 // });
 
 
-$(document).on("click", ".weatherClick", function (event) {
+$(document).on("click", ".weatherClick", function(event){
   //(".weatherClick").on("click", function(event) {
 
 
@@ -224,6 +223,16 @@ $(document).on("click", ".weatherClick", function (event) {
   <style>
   #searchBar{
     margin-left: 10px;
+  };
+
+  #setFixed{
+    width: 10px;
+    height: 10px;
+  }
+
+  #forecastBar{
+    width: fit-content;
+    height: fit-content;
   }
 
   </style>
